@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
 import { SwipeDeck } from "@/components/SwipeDeck";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,12 +20,19 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) void navigate({ to: "/login" });
+    if (loading) return;
+    if (!user) { void navigate({ to: "/login" }); return; }
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("onboarded").eq("id", user.id).maybeSingle();
+      if (!data?.onboarded) { void navigate({ to: "/onboarding" }); return; }
+      setChecking(false);
+    })();
   }, [user, loading, navigate]);
 
-  if (loading || !user) {
+  if (loading || !user || checking) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
 

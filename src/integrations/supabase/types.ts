@@ -106,6 +106,7 @@ export type Database = {
           id: string
           interests: string[]
           name: string
+          onboarded: boolean
           photo_url: string
         }
         Insert: {
@@ -116,6 +117,7 @@ export type Database = {
           id: string
           interests?: string[]
           name?: string
+          onboarded?: boolean
           photo_url?: string
         }
         Update: {
@@ -126,6 +128,7 @@ export type Database = {
           id?: string
           interests?: string[]
           name?: string
+          onboarded?: boolean
           photo_url?: string
         }
         Relationships: []
