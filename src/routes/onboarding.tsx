@@ -66,7 +66,7 @@ function OnboardingPage() {
 
   async function uploadPhoto(file: File) {
     if (!user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    if (file.size > 25 * 1024 * 1024) { toast.error("Image must be under 25MB"); return; }
     if (!file.type.startsWith("image/")) { toast.error("Please pick an image"); return; }
     setUploading(true);
     const ext = file.name.split(".").pop() || "jpg";
