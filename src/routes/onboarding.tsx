@@ -157,7 +157,7 @@ function OnboardingPage() {
               >
                 {photoUrl ? "Change photo" : "Upload photo"}
               </button>
-              <p className="text-xs text-muted-foreground mt-2">JPG or PNG, up to 5MB.</p>
+              <p className="text-xs text-muted-foreground mt-2">Any image format · low or high quality · up to 25MB.</p>
             </div>
           </div>
           <input
