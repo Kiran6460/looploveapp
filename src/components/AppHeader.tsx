@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, MessageCircle, Flame, LogOut } from "lucide-react";
+import { Heart, MessageCircle, Flame, LogOut, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export function AppHeader() {
