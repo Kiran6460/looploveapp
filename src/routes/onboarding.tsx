@@ -27,6 +27,17 @@ const schema = z.object({
   photo_url: z.string().url("Add a profile photo"),
 });
 
+const ACCEPTED_IMAGE_EXTS = new Set([
+  "jpg","jpeg","png","gif","webp","heic","heif","bmp","tiff","tif","raw","cr2","nef","arw","dng","orf","rw2","pef","sr2","svg","avif","jxl"
+]);
+
+function isImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  if (ext && ACCEPTED_IMAGE_EXTS.has(ext)) return true;
+  return false;
+}
+
 function OnboardingPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
