@@ -77,12 +77,12 @@ function OnboardingPage() {
 
   async function uploadPhoto(file: File) {
     if (!user) return;
-    if (file.size > 25 * 1024 * 1024) { toast.error("Image must be under 25MB"); return; }
-    if (!file.type.startsWith("image/")) { toast.error("Please pick an image"); return; }
+    if (file.size > 25 * 1024 * 1024) { toast.error("File must be under 25MB"); return; }
+    if (!isImageFile(file)) { toast.error("Please pick a photo file"); return; }
     setUploading(true);
     const ext = file.name.split(".").pop() || "jpg";
     const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type || "application/octet-stream" });
     if (error) { toast.error(error.message); setUploading(false); return; }
     const { data } = supabase.storage.from("avatars").getPublicUrl(path);
     setPhotoUrl(data.publicUrl);
