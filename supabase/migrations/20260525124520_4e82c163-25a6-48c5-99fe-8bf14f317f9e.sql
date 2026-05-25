@@ -1,0 +1,1 @@
+CREATE POLICY "swipes delete own" ON public.swipes FOR DELETE TO authenticated USING (auth.uid() = swiper_id);
