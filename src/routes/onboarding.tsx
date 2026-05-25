@@ -174,7 +174,7 @@ function OnboardingPage() {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.heic,.heif,.raw,.cr2,.nef,.arw,.dng,.orf,.rw2,.pef,.sr2,.jxl,.avif"
             className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPhoto(f); e.target.value = ""; }}
           />
