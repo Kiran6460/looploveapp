@@ -1,19 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Heart, Loader2, X } from "lucide-react";
+import { Camera, Heart, Loader2, X, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { AppHeader } from "@/components/AppHeader";
 
-export const Route = createFileRoute("/onboarding")({
+export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Set up your profile — Loop Love" },
-      { name: "description", content: "Tell us about yourself before you start swiping." },
+      { title: "Edit Profile — Loop Love" },
+      { name: "description", content: "Update your Loop Love profile." },
     ],
   }),
-  component: OnboardingPage,
+  component: ProfilePage,
 });
 
 const SUGGESTED = ["Coffee","Music","Travel","Hiking","Photography","Art","Books","Films","Cooking","Yoga","Climbing","Dogs","Cats","Wine","Design","Tech","Dance","Beach","Plants","Gaming"];
@@ -38,7 +39,7 @@ function isImageFile(file: File): boolean {
   return false;
 }
 
-function OnboardingPage() {
+function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -69,7 +70,6 @@ function OnboardingPage() {
         setBio(data.bio || "");
         setInterests(data.interests || []);
         setPhotoUrl(data.photo_url || "");
-        if (data.onboarded) void navigate({ to: "/" });
       }
       setLoading(false);
     })();
@@ -112,28 +112,38 @@ function OnboardingPage() {
         bio: parsed.data.bio,
         interests: parsed.data.interests,
         photo_url: parsed.data.photo_url,
-        onboarded: true,
       })
       .eq("id", user.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Profile ready ✨");
+    toast.success("Profile updated ✨");
     void navigate({ to: "/" });
   }
 
   if (loading || authLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen pb-32">
+      <AppHeader />
       <header className="px-5 pt-8 pb-4 max-w-2xl mx-auto flex items-center gap-3">
+        <button
+          onClick={() => void navigate({ to: "/" })}
+          className="p-2 rounded-xl hover:bg-muted transition-colors"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <div className="w-10 h-10 rounded-2xl bg-gradient-love flex items-center justify-center shadow-love">
           <Heart className="w-5 h-5 text-love-foreground" fill="currentColor" />
         </div>
         <div>
-          <p className="text-xs tracking-widest text-muted-foreground uppercase">Step 1 of 1</p>
-          <h1 className="font-display text-2xl">Set up your profile</h1>
+          <h1 className="font-display text-2xl">Edit Profile</h1>
         </div>
       </header>
 
@@ -168,7 +178,9 @@ function OnboardingPage() {
               >
                 {photoUrl ? "Change photo" : "Upload photo"}
               </button>
-              <p className="text-xs text-muted-foreground mt-2">Any image format · low or high quality · up to 25MB.</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Any image format · low or high quality · up to 25MB.
+              </p>
             </div>
           </div>
           <input
@@ -238,13 +250,19 @@ function OnboardingPage() {
 
       {/* Sticky CTA */}
       <div className="fixed bottom-0 inset-x-0 backdrop-blur-xl bg-background/80 border-t border-border/40">
-        <div className="max-w-2xl mx-auto px-5 py-4">
+        <div className="max-w-2xl mx-auto px-5 py-4 flex gap-3">
+          <button
+            onClick={() => void navigate({ to: "/" })}
+            className="flex-1 h-13 py-3.5 rounded-2xl bg-muted font-medium active:scale-[0.99] transition"
+          >
+            Cancel
+          </button>
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="w-full h-13 py-3.5 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love disabled:opacity-50 active:scale-[0.99] transition"
+            className="flex-[2] h-13 py-3.5 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love disabled:opacity-50 active:scale-[0.99] transition"
           >
-            {saving ? "Saving…" : "Start swiping"}
+            {saving ? "Saving…" : "Save changes"}
           </button>
         </div>
       </div>
