@@ -3,6 +3,7 @@ import { Heart, X, MapPin, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
 type Card = {
   id: string;
@@ -29,17 +30,25 @@ export function SwipeDeck() {
   async function load() {
     setLoading(true);
     if (!user) return;
-    const { data: swiped } = await supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id);
+    const [{ data: swiped }, { data: blocked }] = await Promise.all([
+      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
+    ]);
     const swipedIds = new Set((swiped ?? []).map((s) => s.swiped_id));
+    const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
     const [{ data: demo }, { data: real }] = await Promise.all([
       supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("*").neq("id", user.id),
+      supabase.from("profiles").select("*").neq("id", user.id).eq("suspended", false),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
-      .filter((p) => !swipedIds.has(p.id) && p.photo_url)
+      .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
       .sort(() => Math.random() - 0.5);
     setCards(all);
     setLoading(false);
+  }
+
+  function removeTop() {
+    setCards((c) => c.slice(1));
   }
 
   async function swipe(liked: boolean) {
