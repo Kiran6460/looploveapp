@@ -3,6 +3,7 @@ import { Heart, X, MapPin, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { ReportBlockMenu } from "@/components/ReportBlockMenu";
 
 type Card = {
   id: string;
@@ -29,17 +30,25 @@ export function SwipeDeck() {
   async function load() {
     setLoading(true);
     if (!user) return;
-    const { data: swiped } = await supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id);
+    const [{ data: swiped }, { data: blocked }] = await Promise.all([
+      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
+    ]);
     const swipedIds = new Set((swiped ?? []).map((s) => s.swiped_id));
+    const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
     const [{ data: demo }, { data: real }] = await Promise.all([
       supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("*").neq("id", user.id),
+      supabase.from("profiles").select("*").neq("id", user.id).eq("suspended", false),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
-      .filter((p) => !swipedIds.has(p.id) && p.photo_url)
+      .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
       .sort(() => Math.random() - 0.5);
     setCards(all);
     setLoading(false);
+  }
+
+  function removeTop() {
+    setCards((c) => c.slice(1));
   }
 
   async function swipe(liked: boolean) {
@@ -123,6 +132,11 @@ export function SwipeDeck() {
           >
             <img src={card.photo_url} alt={card.name} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            {isTop && (
+              <div className="absolute top-4 right-4 z-20" onPointerDown={(e) => e.stopPropagation()}>
+                <ReportBlockMenu targetId={card.id} targetName={card.name} onBlocked={removeTop} />
+              </div>
+            )}
             {isTop && drag.x > 40 && (
               <div className="absolute top-8 left-8 rotate-[-12deg] border-4 border-love text-love px-4 py-1 rounded-xl text-2xl font-display font-bold tracking-wider">LIKE</div>
             )}

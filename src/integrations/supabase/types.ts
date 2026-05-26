@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       demo_profiles: {
         Row: {
           age: number
@@ -101,6 +122,7 @@ export type Database = {
         Row: {
           age: number
           bio: string
+          birthdate: string | null
           city: string
           created_at: string
           id: string
@@ -108,10 +130,14 @@ export type Database = {
           name: string
           onboarded: boolean
           photo_url: string
+          suspended: boolean
+          suspended_reason: string | null
+          terms_accepted_at: string | null
         }
         Insert: {
           age?: number
           bio?: string
+          birthdate?: string | null
           city?: string
           created_at?: string
           id: string
@@ -119,10 +145,14 @@ export type Database = {
           name?: string
           onboarded?: boolean
           photo_url?: string
+          suspended?: boolean
+          suspended_reason?: string | null
+          terms_accepted_at?: string | null
         }
         Update: {
           age?: number
           bio?: string
+          birthdate?: string | null
           city?: string
           created_at?: string
           id?: string
@@ -130,6 +160,39 @@ export type Database = {
           name?: string
           onboarded?: boolean
           photo_url?: string
+          suspended?: boolean
+          suspended_reason?: string | null
+          terms_accepted_at?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string
+          id: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string
+          id?: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string
+          id?: string
+          reason?: string
+          reported_id?: string
+          reporter_id?: string
+          status?: string
         }
         Relationships: []
       }
