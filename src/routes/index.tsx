@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
 import { SwipeDeck } from "@/components/SwipeDeck";
+import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -37,15 +38,16 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <AppHeader />
-      <main className="max-w-2xl mx-auto px-5 pt-6 pb-32">
+      <main className="flex-1 max-w-2xl mx-auto px-5 pt-6 pb-32 w-full">
         <div className="mb-6">
           <h1 className="font-display text-4xl">Discover</h1>
           <p className="text-muted-foreground mt-1">Swipe right to like, left to pass.</p>
         </div>
         <SwipeDeck />
       </main>
+      <Footer />
     </div>
   );
 }
