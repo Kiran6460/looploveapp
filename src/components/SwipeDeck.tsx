@@ -132,6 +132,11 @@ export function SwipeDeck() {
           >
             <img src={card.photo_url} alt={card.name} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            {isTop && (
+              <div className="absolute top-4 right-4 z-20" onPointerDown={(e) => e.stopPropagation()}>
+                <ReportBlockMenu targetId={card.id} targetName={card.name} onBlocked={removeTop} />
+              </div>
+            )}
             {isTop && drag.x > 40 && (
               <div className="absolute top-8 left-8 rotate-[-12deg] border-4 border-love text-love px-4 py-1 rounded-xl text-2xl font-display font-bold tracking-wider">LIKE</div>
             )}
