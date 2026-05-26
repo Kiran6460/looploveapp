@@ -5,6 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { moderateText } from "@/lib/moderation";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -102,6 +103,10 @@ function OnboardingPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
+    const nameCheck = moderateText(parsed.data.name, "Name");
+    if (!nameCheck.ok) { toast.error(nameCheck.reason); return; }
+    const bioCheck = moderateText(parsed.data.bio, "Bio");
+    if (!bioCheck.ok) { toast.error(bioCheck.reason); return; }
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
