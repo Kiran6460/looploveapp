@@ -14,56 +14,20 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatMatchIdRouteImport } from './routes/chat.$matchId'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalGuidelinesRouteImport } from './routes/legal.guidelines'
-import { Route as ChatMatchIdRouteImport } from './routes/chat.$matchId'
 
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MatchesRoute = MatchesRouteImport.update({
-  id: '/matches',
-  path: '/matches',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegalTermsRoute = LegalTermsRouteImport.update({
-  id: '/legal/terms',
-  path: '/legal/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
-  id: '/legal/privacy',
-  path: '/legal/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegalGuidelinesRoute = LegalGuidelinesRouteImport.update({
-  id: '/legal/guidelines',
-  path: '/legal/guidelines',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatMatchIdRoute = ChatMatchIdRouteImport.update({
-  id: '/chat/$matchId',
-  path: '/chat/$matchId',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ProfileRoute = ProfileRouteImport.update({ id: '/profile', path: '/profile', getParentRoute: () => rootRouteImport } as any)
+const OnboardingRoute = OnboardingRouteImport.update({ id: '/onboarding', path: '/onboarding', getParentRoute: () => rootRouteImport } as any)
+const MatchesRoute = MatchesRouteImport.update({ id: '/matches', path: '/matches', getParentRoute: () => rootRouteImport } as any)
+const LoginRoute = LoginRouteImport.update({ id: '/login', path: '/login', getParentRoute: () => rootRouteImport } as any)
+const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
+const ChatMatchIdRoute = ChatMatchIdRouteImport.update({ id: '/chat/$matchId', path: '/chat/$matchId', getParentRoute: () => rootRouteImport } as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({ id: '/legal/terms', path: '/legal/terms', getParentRoute: () => rootRouteImport } as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({ id: '/legal/privacy', path: '/legal/privacy', getParentRoute: () => rootRouteImport } as any)
+const LegalGuidelinesRoute = LegalGuidelinesRouteImport.update({ id: '/legal/guidelines', path: '/legal/guidelines', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,9 +36,9 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
-  '/legal/guidelines': typeof LegalGuidelinesRoute
-  '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/guidelines': typeof LegalGuidelinesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +47,9 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
-  '/legal/guidelines': typeof LegalGuidelinesRoute
-  '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/guidelines': typeof LegalGuidelinesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,44 +59,16 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
-  '/legal/guidelines': typeof LegalGuidelinesRoute
-  '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/guidelines': typeof LegalGuidelinesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/login'
-    | '/matches'
-    | '/onboarding'
-    | '/profile'
-    | '/chat/$matchId'
-    | '/legal/guidelines'
-    | '/legal/privacy'
-    | '/legal/terms'
+  fullPaths: '/' | '/login' | '/matches' | '/onboarding' | '/profile' | '/chat/$matchId' | '/legal/terms' | '/legal/privacy' | '/legal/guidelines'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/login'
-    | '/matches'
-    | '/onboarding'
-    | '/profile'
-    | '/chat/$matchId'
-    | '/legal/guidelines'
-    | '/legal/privacy'
-    | '/legal/terms'
-  id:
-    | '__root__'
-    | '/'
-    | '/login'
-    | '/matches'
-    | '/onboarding'
-    | '/profile'
-    | '/chat/$matchId'
-    | '/legal/guidelines'
-    | '/legal/privacy'
-    | '/legal/terms'
+  to: '/' | '/login' | '/matches' | '/onboarding' | '/profile' | '/chat/$matchId' | '/legal/terms' | '/legal/privacy' | '/legal/guidelines'
+  id: '__root__' | '/' | '/login' | '/matches' | '/onboarding' | '/profile' | '/chat/$matchId' | '/legal/terms' | '/legal/privacy' | '/legal/guidelines'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -142,100 +78,36 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
   ChatMatchIdRoute: typeof ChatMatchIdRoute
-  LegalGuidelinesRoute: typeof LegalGuidelinesRoute
-  LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalGuidelinesRoute: typeof LegalGuidelinesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/matches': {
-      id: '/matches'
-      path: '/matches'
-      fullPath: '/matches'
-      preLoaderRoute: typeof MatchesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legal/terms': {
-      id: '/legal/terms'
-      path: '/legal/terms'
-      fullPath: '/legal/terms'
-      preLoaderRoute: typeof LegalTermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legal/privacy': {
-      id: '/legal/privacy'
-      path: '/legal/privacy'
-      fullPath: '/legal/privacy'
-      preLoaderRoute: typeof LegalPrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/legal/guidelines': {
-      id: '/legal/guidelines'
-      path: '/legal/guidelines'
-      fullPath: '/legal/guidelines'
-      preLoaderRoute: typeof LegalGuidelinesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat/$matchId': {
-      id: '/chat/$matchId'
-      path: '/chat/$matchId'
-      fullPath: '/chat/$matchId'
-      preLoaderRoute: typeof ChatMatchIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    '/profile': { id: '/profile'; path: '/profile'; fullPath: '/profile'; preLoaderRoute: typeof ProfileRouteImport; parentRoute: typeof rootRouteImport }
+    '/onboarding': { id: '/onboarding'; path: '/onboarding'; fullPath: '/onboarding'; preLoaderRoute: typeof OnboardingRouteImport; parentRoute: typeof rootRouteImport }
+    '/matches': { id: '/matches'; path: '/matches'; fullPath: '/matches'; preLoaderRoute: typeof MatchesRouteImport; parentRoute: typeof rootRouteImport }
+    '/login': { id: '/login'; path: '/login'; fullPath: '/login'; preLoaderRoute: typeof LoginRouteImport; parentRoute: typeof rootRouteImport }
+    '/': { id: '/'; path: '/'; fullPath: '/'; preLoaderRoute: typeof IndexRouteImport; parentRoute: typeof rootRouteImport }
+    '/chat/$matchId': { id: '/chat/$matchId'; path: '/chat/$matchId'; fullPath: '/chat/$matchId'; preLoaderRoute: typeof ChatMatchIdRouteImport; parentRoute: typeof rootRouteImport }
+    '/legal/terms': { id: '/legal/terms'; path: '/legal/terms'; fullPath: '/legal/terms'; preLoaderRoute: typeof LegalTermsRouteImport; parentRoute: typeof rootRouteImport }
+    '/legal/privacy': { id: '/legal/privacy'; path: '/legal/privacy'; fullPath: '/legal/privacy'; preLoaderRoute: typeof LegalPrivacyRouteImport; parentRoute: typeof rootRouteImport }
+    '/legal/guidelines': { id: '/legal/guidelines'; path: '/legal/guidelines'; fullPath: '/legal/guidelines'; preLoaderRoute: typeof LegalGuidelinesRouteImport; parentRoute: typeof rootRouteImport }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  LoginRoute: LoginRoute,
-  MatchesRoute: MatchesRoute,
-  OnboardingRoute: OnboardingRoute,
-  ProfileRoute: ProfileRoute,
-  ChatMatchIdRoute: ChatMatchIdRoute,
-  LegalGuidelinesRoute: LegalGuidelinesRoute,
-  LegalPrivacyRoute: LegalPrivacyRoute,
-  LegalTermsRoute: LegalTermsRoute,
+  IndexRoute,
+  LoginRoute,
+  MatchesRoute,
+  OnboardingRoute,
+  ProfileRoute,
+  ChatMatchIdRoute,
+  LegalTermsRoute,
+  LegalPrivacyRoute,
+  LegalGuidelinesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
