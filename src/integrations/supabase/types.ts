@@ -222,7 +222,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          age: number | null
+          bio: string | null
+          city: string | null
+          created_at: string | null
+          id: string | null
+          interests: string[] | null
+          name: string | null
+          photo_url: string | null
+        }
+        Insert: {
+          age?: number | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          interests?: string[] | null
+          name?: string | null
+          photo_url?: string | null
+        }
+        Update: {
+          age?: number | null
+          bio?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          interests?: string[] | null
+          name?: string | null
+          photo_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
