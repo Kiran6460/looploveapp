@@ -62,7 +62,7 @@ function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,onboarded").eq("id", user.id).maybeSingle();
       if (data) {
         setName(data.name && data.name !== "New User" ? data.name : "");
         setAge(data.age || 25);
