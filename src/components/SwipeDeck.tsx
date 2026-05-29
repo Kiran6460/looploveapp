@@ -38,7 +38,7 @@ export function SwipeDeck() {
     const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
     const [{ data: demo }, { data: real }] = await Promise.all([
       supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("*").neq("id", user.id).eq("suspended", false),
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests").neq("id", user.id).eq("suspended", false),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
