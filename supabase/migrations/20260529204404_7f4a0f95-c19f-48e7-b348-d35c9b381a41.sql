@@ -1,0 +1,1 @@
+REVOKE UPDATE (suspended, suspended_reason) ON public.profiles FROM authenticated;
