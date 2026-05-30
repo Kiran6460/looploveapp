@@ -10,7 +10,7 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Loop Love" },
-      { name: "description", content: "Sign in to Loop Love with a secure email code." },
+      { name: "description", content: "Sign in to Loop Love or create a new account." },
     ],
   }),
   component: LoginPage,
@@ -40,11 +40,16 @@ function rateLimitCheck(email: string): { ok: boolean; retryInSec?: number } {
   }
 }
 
+type Mode = "login" | "signup";
+type Step = "form" | "otp";
+
 function LoginPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState<"email" | "otp">("email");
+  const [mode, setMode] = useState<Mode>("login");
+  const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [is18, setIs18] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -71,12 +76,35 @@ function LoginPage() {
   const expiresInSec = expiresAt ? Math.max(0, Math.ceil((expiresAt - nowTick) / 1000)) : 0;
   const resendInSec = Math.max(0, Math.ceil((resendAt - nowTick) / 1000));
 
-  async function sendOtp(isResend = false) {
-    if (!email) { toast.error("Enter your email"); return; }
-    if (!isResend) {
-      if (!is18) { toast.error("You must confirm you're 18 or older."); return; }
-      if (!acceptedTerms) { toast.error("Please accept the Terms and Privacy Policy."); return; }
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) { toast.error("Enter email and password"); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("email not confirmed")) {
+          toast.error("Please verify your email first. We'll send a new code.");
+          await sendSignupOtp(true);
+          return;
+        }
+        throw error;
+      }
+      toast.success("Welcome back");
+      void navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't sign in");
+    } finally {
+      setLoading(false);
     }
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) { toast.error("Enter email and password"); return; }
+    if (password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (!is18) { toast.error("You must confirm you're 18 or older."); return; }
+    if (!acceptedTerms) { toast.error("Please accept the Terms and Privacy Policy."); return; }
     const rl = rateLimitCheck(email);
     if (!rl.ok) {
       toast.error(`Too many requests. Try again in ${Math.ceil((rl.retryInSec ?? 60) / 60)} min.`);
@@ -84,19 +112,54 @@ function LoginPage() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { data, error } = await supabase.auth.signUp({
         email,
+        password,
         options: {
-          shouldCreateUser: true,
           emailRedirectTo: window.location.origin,
           data: name ? { name } : undefined,
         },
+      });
+      if (error) throw error;
+      // If the project has auto-confirm on, session will be present — skip OTP.
+      if (data.session) {
+        toast.success("Account created");
+        void navigate({ to: "/" });
+        return;
+      }
+      setExpiresAt(Date.now() + OTP_TTL_SECONDS * 1000);
+      setResendAt(Date.now() + RESEND_COOLDOWN * 1000);
+      setOtp(["", "", "", "", "", ""]);
+      setStep("otp");
+      toast.success("We sent a 6-digit code to your email");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't create account");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendSignupOtp(isResend = false) {
+    if (!email) { toast.error("Enter your email"); return; }
+    const rl = rateLimitCheck(email);
+    if (!rl.ok) {
+      toast.error(`Too many requests. Try again in ${Math.ceil((rl.retryInSec ?? 60) / 60)} min.`);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Resend signup confirmation code
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
       setExpiresAt(Date.now() + OTP_TTL_SECONDS * 1000);
       setResendAt(Date.now() + RESEND_COOLDOWN * 1000);
       setOtp(["", "", "", "", "", ""]);
       setStep("otp");
+      setMode("signup");
       toast.success(isResend ? "New code sent" : "We sent a 6-digit code to your email");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't send code");
@@ -110,7 +173,7 @@ function LoginPage() {
     if (expiresInSec <= 0) { toast.error("Code expired. Please resend."); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+      const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "signup" });
       if (error) throw error;
       if (data.user) {
         await supabase
@@ -118,7 +181,7 @@ function LoginPage() {
           .update({ terms_accepted_at: new Date().toISOString(), ...(name ? { name } : {}) })
           .eq("id", data.user.id);
       }
-      toast.success("Welcome to Loop Love");
+      toast.success("Email verified — welcome to Loop Love");
       void navigate({ to: "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid or expired code");
@@ -135,7 +198,6 @@ function LoginPage() {
       const next = [...otp]; next[i] = ""; setOtp(next); return;
     }
     if (digits.length > 1) {
-      // paste
       const arr = digits.slice(0, 6).split("");
       const next = ["", "", "", "", "", ""];
       arr.forEach((d, idx) => { next[idx] = d; });
@@ -168,61 +230,131 @@ function LoginPage() {
           </Link>
 
           <div className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl p-8 shadow-card animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {step === "email" ? (
+            {step === "form" ? (
               <>
-                <h1 className="font-display text-3xl mb-1">Sign in or create account</h1>
-                <p className="text-muted-foreground text-sm mb-7">We'll email you a 6-digit code. 18+ only.</p>
-
-                <form onSubmit={(e) => { e.preventDefault(); void sendOtp(false); }} className="space-y-4">
-                  <Field label="Your name (new accounts)">
-                    <input value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Alex" />
-                  </Field>
-                  <Field label="Email">
-                    <input
-                      required
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input"
-                      placeholder="you@love.com"
-                    />
-                  </Field>
-
-                  <div className="space-y-3 pt-1">
-                    <label className="flex items-start gap-3 text-sm cursor-pointer">
-                      <input type="checkbox" checked={is18} onChange={(e) => setIs18(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[color:var(--color-primary)]" />
-                      <span className="text-muted-foreground">I confirm I am <strong className="text-foreground">18 years of age or older</strong>.</span>
-                    </label>
-                    <label className="flex items-start gap-3 text-sm cursor-pointer">
-                      <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[color:var(--color-primary)]" />
-                      <span className="text-muted-foreground">
-                        I agree to the{" "}
-                        <Link to="/legal/terms" className="text-primary underline">Terms</Link>,{" "}
-                        <Link to="/legal/privacy" className="text-primary underline">Privacy</Link>, and{" "}
-                        <Link to="/legal/guidelines" className="text-primary underline">Guidelines</Link>.
-                      </span>
-                    </label>
-                  </div>
-
+                {/* Mode tabs */}
+                <div className="flex p-1 mb-6 rounded-2xl bg-[oklch(0.13_0.02_320/0.6)] border border-border">
                   <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50"
+                    type="button"
+                    onClick={() => setMode("login")}
+                    className={`flex-1 h-10 rounded-xl text-sm font-medium transition ${mode === "login" ? "bg-gradient-love text-love-foreground shadow-love" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    {loading ? "Sending code…" : "Send 6-digit code"}
+                    Login
                   </button>
-                </form>
+                  <button
+                    type="button"
+                    onClick={() => setMode("signup")}
+                    className={`flex-1 h-10 rounded-xl text-sm font-medium transition ${mode === "signup" ? "bg-gradient-love text-love-foreground shadow-love" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Create account
+                  </button>
+                </div>
+
+                {mode === "login" ? (
+                  <>
+                    <h1 className="font-display text-3xl mb-1">Welcome back</h1>
+                    <p className="text-muted-foreground text-sm mb-7">Sign in with your email and password.</p>
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <Field label="Email">
+                        <input
+                          required
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="input"
+                          placeholder="you@love.com"
+                        />
+                      </Field>
+                      <Field label="Password">
+                        <input
+                          required
+                          type="password"
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="input"
+                          placeholder="••••••••"
+                        />
+                      </Field>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-12 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50"
+                      >
+                        {loading ? "Signing in…" : "Sign in"}
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="font-display text-3xl mb-1">Create your account</h1>
+                    <p className="text-muted-foreground text-sm mb-7">We'll email you a 6-digit code to verify. 18+ only.</p>
+                    <form onSubmit={handleSignup} className="space-y-4">
+                      <Field label="Your name">
+                        <input value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Alex" />
+                      </Field>
+                      <Field label="Email">
+                        <input
+                          required
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="input"
+                          placeholder="you@love.com"
+                        />
+                      </Field>
+                      <Field label="Password">
+                        <input
+                          required
+                          type="password"
+                          autoComplete="new-password"
+                          minLength={8}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="input"
+                          placeholder="At least 8 characters"
+                        />
+                      </Field>
+
+                      <div className="space-y-3 pt-1">
+                        <label className="flex items-start gap-3 text-sm cursor-pointer">
+                          <input type="checkbox" checked={is18} onChange={(e) => setIs18(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[color:var(--color-primary)]" />
+                          <span className="text-muted-foreground">I confirm I am <strong className="text-foreground">18 years of age or older</strong>.</span>
+                        </label>
+                        <label className="flex items-start gap-3 text-sm cursor-pointer">
+                          <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[color:var(--color-primary)]" />
+                          <span className="text-muted-foreground">
+                            I agree to the{" "}
+                            <Link to="/legal/terms" className="text-primary underline">Terms</Link>,{" "}
+                            <Link to="/legal/privacy" className="text-primary underline">Privacy</Link>, and{" "}
+                            <Link to="/legal/guidelines" className="text-primary underline">Guidelines</Link>.
+                          </span>
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-12 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50"
+                      >
+                        {loading ? "Creating account…" : "Create account"}
+                      </button>
+                    </form>
+                  </>
+                )}
               </>
             ) : (
               <>
-                <button onClick={() => setStep("email")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
-                  <ArrowLeft className="w-4 h-4" /> Change email
+                <button onClick={() => setStep("form")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+                  <ArrowLeft className="w-4 h-4" /> Back
                 </button>
-                <h1 className="font-display text-3xl mb-1">Enter the code</h1>
+                <h1 className="font-display text-3xl mb-1">Verify your email</h1>
                 <p className="text-muted-foreground text-sm mb-7">
-                  Sent to <span className="text-foreground">{email}</span>
+                  Enter the 6-digit code we sent to <span className="text-foreground">{email}</span>
                 </p>
 
                 <div className="flex justify-between gap-2 mb-5" onPaste={(e) => {
@@ -257,7 +389,7 @@ function LoginPage() {
                   <button
                     type="button"
                     disabled={loading || resendInSec > 0}
-                    onClick={() => void sendOtp(true)}
+                    onClick={() => void sendSignupOtp(true)}
                     className="text-primary disabled:text-muted-foreground disabled:cursor-not-allowed hover:underline"
                   >
                     {resendInSec > 0 ? `Resend in ${resendInSec}s` : "Resend code"}
