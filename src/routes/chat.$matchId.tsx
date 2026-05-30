@@ -57,8 +57,9 @@ function ChatPage() {
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim() || !user) return;
+    const content = text.trim().slice(0, 2000);
+    if (content.length > 2000) { toast.error("Message too long (2000 max)"); return; }
     setSending(true);
-    const content = text.trim();
     setText("");
     const { error } = await supabase.from("messages").insert({ match_id: matchId, sender_id: user.id, content });
     if (error) toast.error("Couldn't send");
