@@ -115,6 +115,7 @@ function ChatPage() {
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
+            maxLength={2000}
             placeholder="Type a message…"
             className="flex-1 h-12 px-4 rounded-2xl bg-muted/60 border border-border/40 outline-none focus:border-primary text-sm"
           />
