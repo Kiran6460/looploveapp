@@ -129,6 +129,7 @@ export type Database = {
           interests: string[]
           name: string
           onboarded: boolean
+          phone: string | null
           photo_url: string
           suspended: boolean
           suspended_reason: string | null
@@ -144,6 +145,7 @@ export type Database = {
           interests?: string[]
           name?: string
           onboarded?: boolean
+          phone?: string | null
           photo_url?: string
           suspended?: boolean
           suspended_reason?: string | null
@@ -159,6 +161,7 @@ export type Database = {
           interests?: string[]
           name?: string
           onboarded?: boolean
+          phone?: string | null
           photo_url?: string
           suspended?: boolean
           suspended_reason?: string | null
