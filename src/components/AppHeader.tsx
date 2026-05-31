@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart, MessageCircle, Flame, LogOut, User } from "lucide-react";
+import { Heart, MessageCircle, Flame, Settings as SettingsIcon, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export function AppHeader() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const _navigate = useNavigate();
+  void _navigate;
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/60 border-b border-border/40">
@@ -28,13 +29,9 @@ export function AppHeader() {
             <Link to="/profile" className="p-2.5 rounded-xl hover:bg-muted transition-colors data-[status=active]:text-primary" aria-label="Profile">
               <User className="w-5 h-5" />
             </Link>
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="p-2.5 rounded-xl hover:bg-muted transition-colors text-muted-foreground"
-              aria-label="Sign out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <Link to="/settings" className="p-2.5 rounded-xl hover:bg-muted transition-colors data-[status=active]:text-primary" aria-label="Settings">
+              <SettingsIcon className="w-5 h-5" />
+            </Link>
           </nav>
         )}
       </div>
