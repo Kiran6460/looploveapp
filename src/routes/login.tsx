@@ -322,6 +322,13 @@ function LoginPage() {
                         </Field>
                       )}
                       <PasswordField label="Password" value={password} onChange={setPassword} show={showPw} onToggle={() => setShowPw((s) => !s)} autoComplete="current-password" />
+                      {method === "email" && (
+                        <div className="text-right -mt-1">
+                          <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                            Forgot password?
+                          </Link>
+                        </div>
+                      )}
                       <button type="submit" disabled={loading} className="w-full h-12 rounded-2xl bg-gradient-love text-love-foreground font-medium shadow-love hover:opacity-95 active:scale-[0.99] transition disabled:opacity-50">
                         {loading ? "Signing in…" : "Sign in"}
                       </button>
