@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { ReportBlockMenu } from "@/components/ReportBlockMenu";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 type Card = {
   id: string;
@@ -13,6 +14,7 @@ type Card = {
   photo_url: string;
   city: string;
   interests: string[];
+  verification_status?: string | null;
 };
 
 export function SwipeDeck() {
@@ -38,7 +40,7 @@ export function SwipeDeck() {
     const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
     const [{ data: demo }, { data: real }] = await Promise.all([
       supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests").neq("id", user.id).eq("suspended", false),
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("suspended", false).eq("verification_status", "verified"),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
@@ -164,6 +166,7 @@ export function SwipeDeck() {
                 <div className="flex items-end gap-2">
                   <h3 className="font-display text-3xl sm:text-4xl font-semibold leading-none">{card.name}</h3>
                   <span className="text-xl sm:text-2xl font-light">{card.age}</span>
+                  {card.verification_status === "verified" && <VerifiedBadge size={22} className="mb-0.5" />}
                 </div>
                 {card.city && (
                   <div className="flex items-center gap-1 text-sm text-white/80 mt-1">
