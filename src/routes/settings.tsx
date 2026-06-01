@@ -11,6 +11,7 @@ import {
   User as UserIcon,
   X,
   FileText,
+  BadgeCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -95,6 +96,12 @@ function SettingsPage() {
               onClick={() => void navigate({ to: "/forgot-password" })}
             />
           )}
+          <Row
+            icon={<BadgeCheck className="w-5 h-5 text-sky-400" />}
+            label="Profile verification"
+            sub="Verify with a live selfie to unlock matches"
+            onClick={() => void navigate({ to: "/verify" })}
+          />
         </section>
 
         <section className="rounded-3xl border border-border/60 bg-card/60 shadow-card overflow-hidden">
