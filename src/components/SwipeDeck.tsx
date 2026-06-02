@@ -32,21 +32,29 @@ export function SwipeDeck() {
   async function load() {
     setLoading(true);
     if (!user) return;
-    const [{ data: swiped }, { data: blocked }] = await Promise.all([
-      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id),
-      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
+    const t0 = performance.now();
+    // Fetch swipes + blocks + candidate profiles in parallel. Cap each query.
+    const [{ data: swiped }, { data: blocked }, { data: demo }, { data: real }] = await Promise.all([
+      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id).limit(500),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).limit(500),
+      supabase.from("demo_profiles").select("id,name,age,bio,photo_url,city,interests").limit(20),
+      supabase
+        .from("profiles")
+        .select("id,name,age,bio,photo_url,city,interests,verification_status")
+        .neq("id", user.id)
+        .eq("suspended", false)
+        .eq("verification_status", "verified")
+        .limit(50),
     ]);
     const swipedIds = new Set((swiped ?? []).map((s) => s.swiped_id));
     const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
-    const [{ data: demo }, { data: real }] = await Promise.all([
-      supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("suspended", false).eq("verification_status", "verified"),
-    ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
-      .sort(() => Math.random() - 0.5);
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 30);
     setCards(all);
     setLoading(false);
+    if (typeof console !== "undefined") console.debug(`[swipe-deck] loaded ${all.length} cards in ${Math.round(performance.now() - t0)}ms`);
   }
 
   function removeTop() {
