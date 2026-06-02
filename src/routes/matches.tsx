@@ -104,6 +104,10 @@ function MatchesPage() {
                   <img
                     src={m.other?.photo_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
                     alt={m.other?.name ?? "Match"}
+                    loading="lazy"
+                    decoding="async"
+                    width={56}
+                    height={56}
                     className="w-14 h-14 rounded-full object-cover border border-border"
                   />
                   <div className="flex-1 min-w-0">
