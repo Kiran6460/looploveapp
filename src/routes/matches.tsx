@@ -49,7 +49,8 @@ function MatchesPage() {
     const { data: matches } = await supabase
       .from("matches")
       .select("id,user_a,user_b,created_at")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
     if (!matches) { setItems([]); setBusy(false); return; }
     const rows: MatchRow[] = await Promise.all(
       matches.map(async (m) => {
