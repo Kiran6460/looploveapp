@@ -156,8 +156,8 @@ export function SwipeDeck() {
   return (
     <div className="flex flex-col h-full">
       <div className="relative flex-1 min-h-0">
-        {cards.slice(0, 3).reverse().map((card, idxFromBack) => {
-          const indexFromFront = Math.min(2, cards.length - 1) - idxFromBack;
+        {cards.slice(0, 2).reverse().map((card, idxFromBack) => {
+          const indexFromFront = Math.min(1, cards.length - 1) - idxFromBack;
           const isTop = indexFromFront === 0;
           const scale = 1 - indexFromFront * 0.04;
           const ty = indexFromFront * 12;
