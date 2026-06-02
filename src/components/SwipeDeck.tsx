@@ -53,13 +53,36 @@ export function SwipeDeck() {
     setCards((c) => c.slice(1));
   }
 
+  async function insertSwipeWithRetry(swiperId: string, swipedId: string, liked: boolean) {
+    let lastErr: { message?: string; code?: string; details?: string } | null = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { error } = await supabase.from("swipes").insert({ swiper_id: swiperId, swiped_id: swipedId, liked });
+      if (!error) return { ok: true as const };
+      lastErr = error;
+      console.error(`[swipe] attempt ${attempt} failed`, { code: error.code, message: error.message, details: error.details, hint: (error as { hint?: string }).hint });
+      // Don't retry on permission / policy errors — they will never succeed.
+      if (error.code === "42501" || /row-level security|policy|permission/i.test(error.message)) break;
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+    }
+    return { ok: false as const, error: lastErr };
+  }
+
   async function swipe(liked: boolean) {
     const top = cards[0];
     if (!top || !user) return;
     setCards((c) => c.slice(1));
-    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, swiped_id: top.id, liked });
-    if (error) {
-      toast.error("Couldn't save swipe");
+    const res = await insertSwipeWithRetry(user.id, top.id, liked);
+    if (!res.ok) {
+      const msg = res.error?.message ?? "Unknown error";
+      if (/row-level security|policy|permission/i.test(msg) || res.error?.code === "42501") {
+        toast.error("Your profile needs verification before you can swipe.", {
+          action: { label: "Verify", onClick: () => { window.location.href = "/verify"; } },
+        });
+      } else {
+        toast.error(`Couldn't save swipe: ${msg}`);
+      }
+      // Put the card back so the user can retry.
+      setCards((c) => [top, ...c]);
       return;
     }
     if (liked) {
