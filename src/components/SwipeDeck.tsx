@@ -180,7 +180,7 @@ export function SwipeDeck() {
                 WebkitTouchCallout: "none",
               }}
             >
-              <img src={card.photo_url} alt={card.name} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
+              <img src={card.photo_url} alt={card.name} loading={isTop ? "eager" : "lazy"} decoding="async" fetchPriority={isTop ? "high" : "low"} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
               {isTop && (
                 <div className="absolute top-3 right-3 z-20" onPointerDown={(e) => e.stopPropagation()}>
