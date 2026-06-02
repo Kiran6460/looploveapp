@@ -46,33 +46,31 @@ function MatchesPage() {
   async function load() {
     if (!user) return;
     setBusy(true);
-    const t0 = performance.now();
     const { data: matches } = await supabase
       .from("matches")
       .select("id,user_a,user_b,created_at")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (!matches || matches.length === 0) { setItems([]); setBusy(false); return; }
-    const otherIds = matches.map((m) => (m.user_a === user.id ? m.user_b : m.user_a));
-    const matchIds = matches.map((m) => m.id);
-    // Batch: one query for all profiles, one for all last messages.
-    const [{ data: profs }, { data: msgs }] = await Promise.all([
-      supabase.from("profiles").select("id,name,photo_url,city").in("id", otherIds),
-      supabase.from("messages").select("match_id,content,created_at").in("match_id", matchIds).order("created_at", { ascending: false }),
-    ]);
-    const profById = new Map((profs ?? []).map((p) => [p.id, p]));
-    const lastByMatch = new Map<string, { content: string; created_at: string }>();
-    for (const msg of msgs ?? []) {
-      if (!lastByMatch.has(msg.match_id)) lastByMatch.set(msg.match_id, { content: msg.content, created_at: msg.created_at });
-    }
-    const rows: MatchRow[] = matches.map((m) => {
-      const otherId = m.user_a === user.id ? m.user_b : m.user_a;
-      const p = profById.get(otherId);
-      return { id: m.id, other_id: otherId, other: p ? { name: p.name, photo_url: p.photo_url, city: p.city } : null, last: lastByMatch.get(m.id) ?? null };
-    });
+      .order("created_at", { ascending: false });
+    if (!matches) { setItems([]); setBusy(false); return; }
+    const rows: MatchRow[] = await Promise.all(
+      matches.map(async (m) => {
+        const otherId = m.user_a === user.id ? m.user_b : m.user_a;
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("name,photo_url,city")
+          .eq("id", otherId)
+          .maybeSingle();
+        const { data: last } = await supabase
+          .from("messages")
+          .select("content,created_at")
+          .eq("match_id", m.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return { id: m.id, other_id: otherId, other: prof, last };
+      })
+    );
     setItems(rows);
     setBusy(false);
-    console.debug(`[matches] loaded ${rows.length} matches in ${Math.round(performance.now() - t0)}ms`);
   }
 
   return (
@@ -105,10 +103,6 @@ function MatchesPage() {
                   <img
                     src={m.other?.photo_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200"}
                     alt={m.other?.name ?? "Match"}
-                    loading="lazy"
-                    decoding="async"
-                    width={56}
-                    height={56}
                     className="w-14 h-14 rounded-full object-cover border border-border"
                   />
                   <div className="flex-1 min-w-0">

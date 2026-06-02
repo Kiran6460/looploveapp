@@ -17,23 +17,18 @@ export const submitVerification = createServerFn({ method: "POST" })
     if (!data.photoPath.startsWith(`${userId}/`)) {
       throw new Error("Invalid selfie path");
     }
-    // Auto-approve when the on-device liveness score is strong enough;
-    // borderline submissions stay in the admin review queue.
-    const autoApprove = data.livenessScore >= 0.85;
-    const nowIso = new Date().toISOString();
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({
-        verification_status: autoApprove ? "verified" : "pending",
+        verification_status: "pending",
         verification_selfie_url: data.photoPath,
-        verification_submitted_at: nowIso,
-        verification_reviewed_at: autoApprove ? nowIso : null,
+        verification_submitted_at: new Date().toISOString(),
         liveness_score: data.livenessScore,
         verification_rejection_reason: null,
       })
       .eq("id", userId);
     if (error) throw new Error(error.message);
-    return { ok: true, autoApproved: autoApprove };
+    return { ok: true };
   });
 
 export const getMyVerification = createServerFn({ method: "GET" })

@@ -32,65 +32,34 @@ export function SwipeDeck() {
   async function load() {
     setLoading(true);
     if (!user) return;
-    const t0 = performance.now();
-    // Fetch swipes + blocks + candidate profiles in parallel. Cap each query.
-    const [{ data: swiped }, { data: blocked }, { data: demo }, { data: real }] = await Promise.all([
-      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id).limit(500),
-      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).limit(500),
-      supabase.from("demo_profiles").select("id,name,age,bio,photo_url,city,interests").limit(20),
-      supabase
-        .from("profiles")
-        .select("id,name,age,bio,photo_url,city,interests,verification_status")
-        .neq("id", user.id)
-        .eq("suspended", false)
-        .eq("verification_status", "verified")
-        .limit(50),
+    const [{ data: swiped }, { data: blocked }] = await Promise.all([
+      supabase.from("swipes").select("swiped_id").eq("swiper_id", user.id),
+      supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id),
     ]);
     const swipedIds = new Set((swiped ?? []).map((s) => s.swiped_id));
     const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
+    const [{ data: demo }, { data: real }] = await Promise.all([
+      supabase.from("demo_profiles").select("*"),
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("suspended", false).eq("verification_status", "verified"),
+    ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 30);
+      .sort(() => Math.random() - 0.5);
     setCards(all);
     setLoading(false);
-    if (typeof console !== "undefined") console.debug(`[swipe-deck] loaded ${all.length} cards in ${Math.round(performance.now() - t0)}ms`);
   }
 
   function removeTop() {
     setCards((c) => c.slice(1));
   }
 
-  async function insertSwipeWithRetry(swiperId: string, swipedId: string, liked: boolean) {
-    let lastErr: { message?: string; code?: string; details?: string } | null = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const { error } = await supabase.from("swipes").insert({ swiper_id: swiperId, swiped_id: swipedId, liked });
-      if (!error) return { ok: true as const };
-      lastErr = error;
-      console.error(`[swipe] attempt ${attempt} failed`, { code: error.code, message: error.message, details: error.details, hint: (error as { hint?: string }).hint });
-      // Don't retry on permission / policy errors — they will never succeed.
-      if (error.code === "42501" || /row-level security|policy|permission/i.test(error.message)) break;
-      await new Promise((r) => setTimeout(r, 250 * attempt));
-    }
-    return { ok: false as const, error: lastErr };
-  }
-
   async function swipe(liked: boolean) {
     const top = cards[0];
     if (!top || !user) return;
     setCards((c) => c.slice(1));
-    const res = await insertSwipeWithRetry(user.id, top.id, liked);
-    if (!res.ok) {
-      const msg = res.error?.message ?? "Unknown error";
-      if (/row-level security|policy|permission/i.test(msg) || res.error?.code === "42501") {
-        toast.error("Your profile needs verification before you can swipe.", {
-          action: { label: "Verify", onClick: () => { window.location.href = "/verify"; } },
-        });
-      } else {
-        toast.error(`Couldn't save swipe: ${msg}`);
-      }
-      // Put the card back so the user can retry.
-      setCards((c) => [top, ...c]);
+    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, swiped_id: top.id, liked });
+    if (error) {
+      toast.error("Couldn't save swipe");
       return;
     }
     if (liked) {
@@ -156,8 +125,8 @@ export function SwipeDeck() {
   return (
     <div className="flex flex-col h-full">
       <div className="relative flex-1 min-h-0">
-        {cards.slice(0, 2).reverse().map((card, idxFromBack) => {
-          const indexFromFront = Math.min(1, cards.length - 1) - idxFromBack;
+        {cards.slice(0, 3).reverse().map((card, idxFromBack) => {
+          const indexFromFront = Math.min(2, cards.length - 1) - idxFromBack;
           const isTop = indexFromFront === 0;
           const scale = 1 - indexFromFront * 0.04;
           const ty = indexFromFront * 12;
@@ -180,7 +149,7 @@ export function SwipeDeck() {
                 WebkitTouchCallout: "none",
               }}
             >
-              <img src={card.photo_url} alt={card.name} loading={isTop ? "eager" : "lazy"} decoding="async" fetchPriority={isTop ? "high" : "low"} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
+              <img src={card.photo_url} alt={card.name} className="absolute inset-0 w-full h-full object-cover pointer-events-none" draggable={false} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
               {isTop && (
                 <div className="absolute top-3 right-3 z-20" onPointerDown={(e) => e.stopPropagation()}>
