@@ -16,14 +16,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      setLoading(false);
-    });
+    let initialized = false;
+
+    // Resolve the persisted session FIRST. The onAuthStateChange listener
+    // can fire INITIAL_SESSION with null before storage is restored, which
+    // causes a flash to /login followed by a redirect back — the "URL
+    // blinking" loop. We only flip `loading` off after getSession() returns.
     supabase.auth.getSession().then(({ data }) => {
+      initialized = true;
       setSession(data.session);
       setLoading(false);
     });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      // Ignore events until the initial session has been resolved, so a
+      // premature null from INITIAL_SESSION can't sign the user out.
+      if (!initialized) return;
+      setSession(s);
+    });
+
     return () => sub.subscription.unsubscribe();
   }, []);
 
