@@ -40,7 +40,9 @@ export function SwipeDeck() {
     const blockedIds = new Set((blocked ?? []).map((b) => b.blocked_id));
     const [{ data: demo }, { data: real }] = await Promise.all([
       supabase.from("demo_profiles").select("*"),
-      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("suspended", false).eq("verification_status", "verified"),
+      // `suspended = false` is enforced by RLS ("profiles read" policy), so we
+      // don't filter on it here (the suspended column is not granted to authenticated).
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("verification_status", "verified"),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
