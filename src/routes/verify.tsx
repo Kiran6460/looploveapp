@@ -510,15 +510,23 @@ function LivenessCapture({
       const faceWidth = Math.max(1, jaw[jaw.length - 1].x - jaw[0].x);
       const yaw = (nose[3].x - faceCenterX) / faceWidth; // -0.3..0.3
 
-      const ch = CHALLENGE_ORDER[progress];
+      const ch = CHALLENGE_ORDER[stateRef.current.stepIndex];
+      if (!ch) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
 
       // Always require face well-positioned before crediting any challenge
       const centered = offX < 0.12 && offY < 0.18;
       const correctSize = faceFrac > 0.28 && faceFrac < 0.7;
-      if (!centered) {
-        setHint("Center your face in the circle");
-        rafRef.current = requestAnimationFrame(tick);
-        return;
+      // For the "center" step we strictly require centered+sized. For other
+      // steps (turns) the head WILL move off-center, so only require size.
+      if (ch === "center" || ch === "straight") {
+        if (!centered) {
+          setHint("Center your face in the circle");
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
       }
       if (!correctSize) {
         setHint(faceFrac <= 0.28 ? "Move a bit closer" : "Move a bit farther away");
@@ -532,10 +540,12 @@ function LivenessCapture({
 
       if (ch === "center") {
         setHint("Hold still…");
-        // require a few stable frames
-        if (stateRef.current.framesSeen > 12) advance(0.2);
+        stateRef.current.centerHoldFrames++;
+        // Require ~30 consecutive centered frames (~1s at 30fps)
+        if (stateRef.current.centerHoldFrames > 30) advance(0.2);
       } else if (ch === "blink") {
         setHint("Blink your eyes");
+        // Need to observe BOTH a closed-eye frame AND a re-open
         if (ear < 0.2) stateRef.current.blinkLow = true;
         else if (stateRef.current.blinkLow && ear > 0.28) {
           stateRef.current.blinkLow = false;
@@ -543,11 +553,10 @@ function LivenessCapture({
         }
       } else if (ch === "left") {
         setHint("Turn your head to the LEFT");
-        // mirrored video: user's left = positive yaw on mirrored display, but raw yaw negative when face turns to their left.
-        if (yaw < -0.12) advance(0.2);
+        if (yaw < -0.18) advance(0.2);
       } else if (ch === "right") {
         setHint("Turn your head to the RIGHT");
-        if (yaw > 0.12) advance(0.2);
+        if (yaw > 0.18) advance(0.2);
       } else if (ch === "straight") {
         setHint("Look straight at the camera");
         if (Math.abs(yaw) < 0.06) advance(0.2);
