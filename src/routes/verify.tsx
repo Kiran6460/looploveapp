@@ -510,7 +510,6 @@ function LivenessCapture({
       const rightEye = landmarks.getRightEye();
       const earL = eyeAspect(leftEye);
       const earR = eyeAspect(rightEye);
-      const ear = (earL + earR) / 2;
 
       const nose = landmarks.getNose();      // 9 pts (indices 27..35)
       const jaw = landmarks.getJawOutline(); // 17 pts
