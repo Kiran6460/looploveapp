@@ -504,17 +504,32 @@ function LivenessCapture({
         if (dx > 0.5) stateRef.current.motionFrames++;
       }
 
-      // Position/size guidance
+      // Landmarks
       const landmarks = detection.landmarks;
       const leftEye = landmarks.getLeftEye();
       const rightEye = landmarks.getRightEye();
-      const ear = (eyeAspect(leftEye) + eyeAspect(rightEye)) / 2;
+      const earL = eyeAspect(leftEye);
+      const earR = eyeAspect(rightEye);
+      const ear = (earL + earR) / 2;
 
-      const nose = landmarks.getNose();
-      const jaw = landmarks.getJawOutline();
+      const nose = landmarks.getNose();      // 9 pts (indices 27..35)
+      const jaw = landmarks.getJawOutline(); // 17 pts
+      const mouth = landmarks.getMouth();    // 20 pts
+
+      // Yaw (horizontal head turn): nose tip offset from face midline,
+      // normalized by face width.
       const faceCenterX = (jaw[0].x + jaw[jaw.length - 1].x) / 2;
       const faceWidth = Math.max(1, jaw[jaw.length - 1].x - jaw[0].x);
-      const yaw = (nose[3].x - faceCenterX) / faceWidth; // -0.3..0.3
+      const yaw = (nose[3].x - faceCenterX) / faceWidth; // ~ -0.3..0.3
+
+      // Pitch (vertical head tilt up/down): compare nose-to-eyes vs nose-to-chin
+      // vertical distances. Looking straight ≈ 0, down ≈ +, up ≈ -.
+      const eyeMidY = (leftEye[0].y + leftEye[3].y + rightEye[0].y + rightEye[3].y) / 4;
+      const chinY = jaw[8].y;
+      const noseY = nose[6].y; // lower nose
+      const eyeToNose = Math.max(1, noseY - eyeMidY);
+      const noseToChin = Math.max(1, chinY - noseY);
+      const pitch = (eyeToNose - noseToChin) / (eyeToNose + noseToChin);
 
       const ch = CHALLENGE_ORDER[stateRef.current.stepIndex];
       if (!ch) {
@@ -525,11 +540,31 @@ function LivenessCapture({
       // Always require face well-positioned before crediting any challenge
       const centered = offX < 0.12 && offY < 0.18;
       const correctSize = faceFrac > 0.28 && faceFrac < 0.7;
-      // For the "center" step we strictly require centered+sized. For other
-      // steps (turns) the head WILL move off-center, so only require size.
-      if (ch === "center" || ch === "straight") {
+      const levelPitch = Math.abs(pitch) < 0.18; // not looking up/down
+
+      // For "center"/"straight"/"blink" we need a fully framed, level face.
+      if (ch === "center" || ch === "straight" || ch === "blink") {
         if (!centered) {
           setHint("Center your face in the circle");
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+        if (!levelPitch) {
+          setHint(pitch > 0 ? "Don't look down — face the camera" : "Don't look up — face the camera");
+          stateRef.current.centerHoldFrames = 0;
+          stateRef.current.straightHoldFrames = 0;
+          stateRef.current.blinkLowFrames = 0;
+          stateRef.current.blinkLow = false;
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+      }
+      // Turn steps: head leaves center horizontally, but must still be level
+      // (no looking down) and at the correct size.
+      if (ch === "left" || ch === "right") {
+        if (!levelPitch) {
+          setHint("Keep your head level — don't tilt up or down");
+          stateRef.current.turnHoldFrames = 0;
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
@@ -546,26 +581,63 @@ function LivenessCapture({
 
       if (ch === "center") {
         setHint("Hold still…");
-        stateRef.current.centerHoldFrames++;
-        // Require ~30 consecutive centered frames (~1s at 30fps)
+        // Must also be facing forward (no yaw) to count as centered.
+        if (Math.abs(yaw) < 0.1) {
+          stateRef.current.centerHoldFrames++;
+        } else {
+          stateRef.current.centerHoldFrames = 0;
+        }
         if (stateRef.current.centerHoldFrames > 30) advance(0.2);
       } else if (ch === "blink") {
-        setHint("Blink your eyes");
-        // Need to observe BOTH a closed-eye frame AND a re-open
-        if (ear < 0.2) stateRef.current.blinkLow = true;
-        else if (stateRef.current.blinkLow && ear > 0.28) {
+        setHint("Blink your eyes (both eyes, then open)");
+        // Head must be facing forward during blink so a head turn cannot
+        // be mistaken for a blink (turning the head reduces one eye's EAR).
+        if (Math.abs(yaw) > 0.12) {
           stateRef.current.blinkLow = false;
+          stateRef.current.blinkLowFrames = 0;
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+        // Require BOTH eyes individually closed for ≥2 consecutive frames,
+        // then a clean reopen on both eyes.
+        const bothClosed = earL < 0.2 && earR < 0.2;
+        const bothOpen = earL > 0.28 && earR > 0.28;
+        if (bothClosed) {
+          stateRef.current.blinkLowFrames++;
+          if (stateRef.current.blinkLowFrames >= 2) stateRef.current.blinkLow = true;
+        } else if (stateRef.current.blinkLow && bothOpen) {
+          stateRef.current.blinkLow = false;
+          stateRef.current.blinkLowFrames = 0;
           advance(0.2);
+        } else if (!bothClosed && !stateRef.current.blinkLow) {
+          // reset partial closures (e.g. squints)
+          stateRef.current.blinkLowFrames = 0;
         }
       } else if (ch === "left") {
         setHint("Turn your head to the LEFT");
-        if (yaw < -0.18) advance(0.2);
+        // Require a sustained turn (~6 frames) past threshold.
+        if (yaw < -0.2) {
+          stateRef.current.turnHoldFrames++;
+        } else {
+          stateRef.current.turnHoldFrames = Math.max(0, stateRef.current.turnHoldFrames - 1);
+        }
+        if (stateRef.current.turnHoldFrames >= 6) advance(0.2);
       } else if (ch === "right") {
         setHint("Turn your head to the RIGHT");
-        if (yaw > 0.18) advance(0.2);
+        if (yaw > 0.2) {
+          stateRef.current.turnHoldFrames++;
+        } else {
+          stateRef.current.turnHoldFrames = Math.max(0, stateRef.current.turnHoldFrames - 1);
+        }
+        if (stateRef.current.turnHoldFrames >= 6) advance(0.2);
       } else if (ch === "straight") {
         setHint("Look straight at the camera");
-        if (Math.abs(yaw) < 0.06) advance(0.2);
+        if (Math.abs(yaw) < 0.07) {
+          stateRef.current.straightHoldFrames++;
+        } else {
+          stateRef.current.straightHoldFrames = 0;
+        }
+        if (stateRef.current.straightHoldFrames >= 20) advance(0.2);
       }
 
       rafRef.current = requestAnimationFrame(tick);
