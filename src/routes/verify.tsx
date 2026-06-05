@@ -285,9 +285,12 @@ function LivenessCapture({
   const stepStartTsRef = useRef<number>(Date.now());
   const stateRef = useRef({
     blinkLow: false,
+    blinkLowFrames: 0,
     blinkSeen: false,
     framesSeen: 0,
     centerHoldFrames: 0,
+    straightHoldFrames: 0,
+    turnHoldFrames: 0,
     motionFrames: 0,
     lastBoxes: [] as CaptureFrame[],
     completedScore: 0,
