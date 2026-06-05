@@ -316,8 +316,11 @@ function LivenessCapture({
     const next = stateRef.current.stepIndex + 1;
     stateRef.current.stepIndex = next;
     stateRef.current.blinkLow = false;
+    stateRef.current.blinkLowFrames = 0;
     stateRef.current.blinkSeen = false;
     stateRef.current.centerHoldFrames = 0;
+    stateRef.current.straightHoldFrames = 0;
+    stateRef.current.turnHoldFrames = 0;
     stepStartTsRef.current = Date.now();
     setProgress(next);
     setDoneFlash(true);
@@ -331,7 +334,7 @@ function LivenessCapture({
     // continued head turn from satisfying both "left" and "right").
     setTimeout(() => {
       stateRef.current.stepAdvancing = false;
-    }, 600);
+    }, 800);
   }, []);
 
   const finalizeRef = useRef<(() => void) | null>(null);
