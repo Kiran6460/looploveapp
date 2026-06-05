@@ -287,10 +287,13 @@ function LivenessCapture({
     blinkLow: false,
     blinkSeen: false,
     framesSeen: 0,
+    centerHoldFrames: 0,
     motionFrames: 0,
     lastBoxes: [] as CaptureFrame[],
     completedScore: 0,
     finalized: false,
+    stepIndex: 0,
+    stepAdvancing: false,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -302,21 +305,30 @@ function LivenessCapture({
   const [hint, setHint] = useState<string>("Position your face in the circle");
 
   const advance = useCallback((scoreAdd: number) => {
+    // Guard so the loop can't advance twice within the same step.
+    if (stateRef.current.stepAdvancing) return;
+    if (stateRef.current.stepIndex >= CHALLENGE_ORDER.length) return;
+    stateRef.current.stepAdvancing = true;
     stateRef.current.completedScore += scoreAdd;
-    setProgress((p) => {
-      const next = p + 1;
-      setDoneFlash(true);
-      setTimeout(() => setDoneFlash(false), 500);
-      if (next >= CHALLENGE_ORDER.length) {
-        finalizeRef.current?.();
-        return CHALLENGE_ORDER.length;
-      }
+    const next = stateRef.current.stepIndex + 1;
+    stateRef.current.stepIndex = next;
+    stateRef.current.blinkLow = false;
+    stateRef.current.blinkSeen = false;
+    stateRef.current.centerHoldFrames = 0;
+    stepStartTsRef.current = Date.now();
+    setProgress(next);
+    setDoneFlash(true);
+    setTimeout(() => setDoneFlash(false), 500);
+    if (next >= CHALLENGE_ORDER.length) {
+      finalizeRef.current?.();
+    } else {
       setCurrent(CHALLENGE_ORDER[next]);
-      stateRef.current.blinkLow = false;
-      stateRef.current.blinkSeen = false;
-      stepStartTsRef.current = Date.now();
-      return next;
-    });
+    }
+    // Brief cooldown before the next step can be credited (prevents one
+    // continued head turn from satisfying both "left" and "right").
+    setTimeout(() => {
+      stateRef.current.stepAdvancing = false;
+    }, 600);
   }, []);
 
   const finalizeRef = useRef<(() => void) | null>(null);
