@@ -513,7 +513,6 @@ function LivenessCapture({
 
       const nose = landmarks.getNose();      // 9 pts (indices 27..35)
       const jaw = landmarks.getJawOutline(); // 17 pts
-      const mouth = landmarks.getMouth();    // 20 pts
 
       // Yaw (horizontal head turn): nose tip offset from face midline,
       // normalized by face width.
