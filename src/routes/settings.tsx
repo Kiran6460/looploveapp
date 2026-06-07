@@ -96,12 +96,13 @@ function SettingsPage() {
               onClick={() => void navigate({ to: "/forgot-password" })}
             />
           )}
-          <Row
-            icon={<BadgeCheck className="w-5 h-5 text-sky-400" />}
-            label="Profile verification"
-            sub="Verify with a live selfie to unlock matches"
-            onClick={() => void navigate({ to: "/verify" })}
-          />
+          <div className="w-full px-5 py-4 flex items-center gap-3 border-b border-border/40 last:border-b-0">
+            <span className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center text-sky-400"><BadgeCheck className="w-5 h-5" /></span>
+            <span className="flex-1">
+              <span className="block font-medium">Email verified</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">Your email address is confirmed</span>
+            </span>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-border/60 bg-card/60 shadow-card overflow-hidden">
