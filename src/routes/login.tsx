@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Footer } from "@/components/Footer";
-import { signupWithPhone, resolvePhoneLogin, phoneToSyntheticEmail } from "@/lib/auth.functions";
+import { signupWithPhone, loginWithPhone } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
