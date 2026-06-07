@@ -154,7 +154,6 @@ export type Database = {
           created_at: string
           id: string
           interests: string[]
-          liveness_score: number | null
           name: string
           onboarded: boolean
           phone: string | null
@@ -162,11 +161,6 @@ export type Database = {
           suspended: boolean
           suspended_reason: string | null
           terms_accepted_at: string | null
-          verification_rejection_reason: string | null
-          verification_reviewed_at: string | null
-          verification_selfie_url: string | null
-          verification_status: string
-          verification_submitted_at: string | null
         }
         Insert: {
           age?: number
@@ -176,7 +170,6 @@ export type Database = {
           created_at?: string
           id: string
           interests?: string[]
-          liveness_score?: number | null
           name?: string
           onboarded?: boolean
           phone?: string | null
@@ -184,11 +177,6 @@ export type Database = {
           suspended?: boolean
           suspended_reason?: string | null
           terms_accepted_at?: string | null
-          verification_rejection_reason?: string | null
-          verification_reviewed_at?: string | null
-          verification_selfie_url?: string | null
-          verification_status?: string
-          verification_submitted_at?: string | null
         }
         Update: {
           age?: number
@@ -198,7 +186,6 @@ export type Database = {
           created_at?: string
           id?: string
           interests?: string[]
-          liveness_score?: number | null
           name?: string
           onboarded?: boolean
           phone?: string | null
@@ -206,11 +193,6 @@ export type Database = {
           suspended?: boolean
           suspended_reason?: string | null
           terms_accepted_at?: string | null
-          verification_rejection_reason?: string | null
-          verification_reviewed_at?: string | null
-          verification_selfie_url?: string | null
-          verification_status?: string
-          verification_submitted_at?: string | null
         }
         Relationships: []
       }
@@ -289,33 +271,6 @@ export type Database = {
         }
         Relationships: []
       }
-      verification_reviews: {
-        Row: {
-          action: string
-          created_at: string
-          id: string
-          profile_id: string
-          reason: string | null
-          reviewer_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          id?: string
-          profile_id: string
-          reason?: string | null
-          reviewer_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          id?: string
-          profile_id?: string
-          reason?: string | null
-          reviewer_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -328,7 +283,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_verified: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
