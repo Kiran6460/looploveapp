@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Synthetic-email domain used to back phone-only accounts in Supabase Auth.
-// Real phone number is normalized to E.164-style digits.
 const PHONE_EMAIL_DOMAIN = "phone.looplove.app";
 
-export function phoneToSyntheticEmail(phone: string): string {
+function phoneToSyntheticEmail(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   return `p${digits}@${PHONE_EMAIL_DOMAIN}`;
 }
@@ -30,7 +30,6 @@ export const signupWithPhone = createServerFn({ method: "POST" })
       throw new Error("Enter a valid mobile number");
     }
 
-    // Duplicate check (profiles.phone is unique, but check first for a clean error).
     const { data: existing, error: lookupError } = await supabaseAdmin
       .from("profiles")
       .select("id")
@@ -61,7 +60,6 @@ export const signupWithPhone = createServerFn({ method: "POST" })
       throw new Error(msg);
     }
 
-    // Ensure profile carries the phone + terms acceptance (trigger inserts the row).
     await supabaseAdmin
       .from("profiles")
       .update({ phone: normalized, terms_accepted_at: new Date().toISOString() })
@@ -70,24 +68,42 @@ export const signupWithPhone = createServerFn({ method: "POST" })
     return { ok: true, email };
   });
 
-const phoneLookupSchema = z.object({
+const phoneLoginSchema = z.object({
   phone: z
     .string()
     .trim()
     .min(7)
     .max(20)
     .regex(/^\+?[0-9 ()-]+$/),
+  password: z.string().min(1).max(200),
 });
 
-export const resolvePhoneLogin = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => phoneLookupSchema.parse(input))
+// Server-side phone login: resolves phone -> synthetic email server-side and
+// performs the password sign-in, returning session tokens. Avoids leaking
+// whether a phone number is registered (returns the same generic error for
+// "no account" and "wrong password").
+export const loginWithPhone = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => phoneLoginSchema.parse(input))
   .handler(async ({ data }) => {
     const normalized = data.phone.replace(/\D/g, "");
-    const { data: row } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("phone", normalized)
-      .maybeSingle();
-    if (!row) return { email: null as string | null };
-    return { email: phoneToSyntheticEmail(normalized) };
+    const email = phoneToSyntheticEmail(normalized);
+
+    const SUPABASE_URL = process.env.SUPABASE_URL!;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY!;
+    const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: result, error } = await client.auth.signInWithPassword({
+      email,
+      password: data.password,
+    });
+    if (error || !result.session) {
+      // Generic message — do not reveal whether the phone number exists.
+      throw new Error("Invalid mobile number or password");
+    }
+    return {
+      access_token: result.session.access_token,
+      refresh_token: result.session.refresh_token,
+    };
   });
