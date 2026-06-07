@@ -14,7 +14,6 @@ type Card = {
   photo_url: string;
   city: string;
   interests: string[];
-  verification_status?: string | null;
 };
 
 export function SwipeDeck() {
