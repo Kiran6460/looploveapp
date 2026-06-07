@@ -68,7 +68,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const signupPhone = useServerFn(signupWithPhone);
-  const lookupPhone = useServerFn(resolvePhoneLogin);
+  const phoneLogin = useServerFn(loginWithPhone);
 
   const [mode, setMode] = useState<Mode>("login");
   const [method, setMethod] = useState<Method>("email");
