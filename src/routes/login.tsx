@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { Footer } from "@/components/Footer";
-import { signupWithPhone, resolvePhoneLogin, phoneToSyntheticEmail } from "@/lib/auth.functions";
+import { signupWithPhone, loginWithPhone } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -68,7 +68,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const signupPhone = useServerFn(signupWithPhone);
-  const lookupPhone = useServerFn(resolvePhoneLogin);
+  const phoneLogin = useServerFn(loginWithPhone);
 
   const [mode, setMode] = useState<Mode>("login");
   const [method, setMethod] = useState<Method>("email");
@@ -110,21 +110,20 @@ function LoginPage() {
     if (!password) { toast.error("Enter your password"); return; }
     setLoading(true);
     try {
-      let signInEmail = email.trim();
       if (method === "phone") {
         if (!phone.trim()) { toast.error("Enter your mobile number"); return; }
-        const { email: resolved } = await lookupPhone({ data: { phone } });
-        if (!resolved) {
-          toast.error("No account found with this mobile number");
-          return;
-        }
-        signInEmail = resolved;
-      } else if (!signInEmail) {
-        toast.error("Enter your email"); return;
+        const { access_token, refresh_token } = await phoneLogin({ data: { phone, password } });
+        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) throw error;
+        toast.success("Welcome back");
+        void navigate({ to: "/" });
+        return;
       }
+      const signInEmail = email.trim();
+      if (!signInEmail) { toast.error("Enter your email"); return; }
       const { error } = await supabase.auth.signInWithPassword({ email: signInEmail, password });
       if (error) {
-        if (method === "email" && error.message.toLowerCase().includes("email not confirmed")) {
+        if (error.message.toLowerCase().includes("email not confirmed")) {
           toast.error("Please verify your email first. We'll send a new code.");
           await sendSignupOtp(true);
           return;

@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Heart, Loader2, X } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { moderateText } from "@/lib/moderation";
+import { saveOnboarding } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -43,6 +44,7 @@ function OnboardingPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const saveOnboardingFn = useServerFn(saveOnboarding);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,27 +105,23 @@ function OnboardingPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
-    const nameCheck = moderateText(parsed.data.name, "Name");
-    if (!nameCheck.ok) { toast.error(nameCheck.reason); return; }
-    const bioCheck = moderateText(parsed.data.bio, "Bio");
-    if (!bioCheck.ok) { toast.error(bioCheck.reason); return; }
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    try {
+      await saveOnboardingFn({ data: {
         name: parsed.data.name,
         age: parsed.data.age,
         city: parsed.data.city ?? "",
         bio: parsed.data.bio,
         interests: parsed.data.interests,
         photo_url: parsed.data.photo_url,
-        onboarded: true,
-      })
-      .eq("id", user.id);
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Profile ready ✨");
-    void navigate({ to: "/" });
+      }});
+      toast.success("Profile ready ✨");
+      void navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save profile");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading || authLoading) {
