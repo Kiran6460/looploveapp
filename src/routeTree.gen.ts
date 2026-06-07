@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -22,13 +21,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalGuidelinesRouteImport } from './routes/legal.guidelines'
 import { Route as ChatMatchIdRouteImport } from './routes/chat.$matchId'
-import { Route as AdminVerificationsRouteImport } from './routes/admin.verifications'
 
-const VerifyRoute = VerifyRouteImport.update({
-  id: '/verify',
-  path: '/verify',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -89,11 +82,6 @@ const ChatMatchIdRoute = ChatMatchIdRouteImport.update({
   path: '/chat/$matchId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminVerificationsRoute = AdminVerificationsRouteImport.update({
-  id: '/admin/verifications',
-  path: '/admin/verifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,8 +92,6 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/verify': typeof VerifyRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -120,8 +106,6 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/verify': typeof VerifyRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -137,8 +121,6 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/verify': typeof VerifyRoute
-  '/admin/verifications': typeof AdminVerificationsRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -155,8 +137,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
-    | '/verify'
-    | '/admin/verifications'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -171,8 +151,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
-    | '/verify'
-    | '/admin/verifications'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -187,8 +165,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
-    | '/verify'
-    | '/admin/verifications'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -204,8 +180,6 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
-  VerifyRoute: typeof VerifyRoute
-  AdminVerificationsRoute: typeof AdminVerificationsRoute
   ChatMatchIdRoute: typeof ChatMatchIdRoute
   LegalGuidelinesRoute: typeof LegalGuidelinesRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -214,13 +188,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify': {
-      id: '/verify'
-      path: '/verify'
-      fullPath: '/verify'
-      preLoaderRoute: typeof VerifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -305,13 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatMatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/verifications': {
-      id: '/admin/verifications'
-      path: '/admin/verifications'
-      fullPath: '/admin/verifications'
-      preLoaderRoute: typeof AdminVerificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -324,8 +284,6 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
-  VerifyRoute: VerifyRoute,
-  AdminVerificationsRoute: AdminVerificationsRoute,
   ChatMatchIdRoute: ChatMatchIdRoute,
   LegalGuidelinesRoute: LegalGuidelinesRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
@@ -334,3 +292,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
