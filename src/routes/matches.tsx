@@ -35,9 +35,12 @@ function MatchesPage() {
   useEffect(() => {
     if (!user) return;
     void load();
+    // Scope realtime subscriptions to this user only — defense-in-depth on top of RLS,
+    // so the server filters events rather than relying solely on per-subscriber RLS.
     const ch = supabase
-      .channel("matches-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, () => void load())
+      .channel(`matches-list-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `user_a=eq.${user.id}` }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `user_b=eq.${user.id}` }, () => void load())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => void load())
       .subscribe();
     return () => { void supabase.removeChannel(ch); };
