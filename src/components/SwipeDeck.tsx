@@ -167,7 +167,7 @@ export function SwipeDeck() {
                 <div className="flex items-end gap-2">
                   <h3 className="font-display text-3xl sm:text-4xl font-semibold leading-none">{card.name}</h3>
                   <span className="text-xl sm:text-2xl font-light">{card.age}</span>
-                  {card.verification_status === "verified" && <VerifiedBadge size={22} className="mb-0.5" />}
+                  <VerifiedBadge size={22} className="mb-0.5" />
                 </div>
                 {card.city && (
                   <div className="flex items-center gap-1 text-sm text-white/80 mt-1">
