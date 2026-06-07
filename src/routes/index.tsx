@@ -26,9 +26,8 @@ function Home() {
     if (loading) return;
     if (!user) { void navigate({ to: "/login" }); return; }
     void (async () => {
-      const { data } = await supabase.from("profiles").select("onboarded, verification_status").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("onboarded").eq("id", user.id).maybeSingle();
       if (!data?.onboarded) { void navigate({ to: "/onboarding" }); return; }
-      if (data?.verification_status !== "verified") { void navigate({ to: "/verify" }); return; }
       setChecking(false);
     })();
   }, [user, loading, navigate]);

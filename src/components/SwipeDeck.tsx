@@ -14,7 +14,6 @@ type Card = {
   photo_url: string;
   city: string;
   interests: string[];
-  verification_status?: string | null;
 };
 
 export function SwipeDeck() {
@@ -42,7 +41,7 @@ export function SwipeDeck() {
       supabase.from("demo_profiles").select("*"),
       // `suspended = false` is enforced by RLS ("profiles read" policy), so we
       // don't filter on it here (the suspended column is not granted to authenticated).
-      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("verification_status", "verified"),
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests").neq("id", user.id),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
@@ -168,7 +167,7 @@ export function SwipeDeck() {
                 <div className="flex items-end gap-2">
                   <h3 className="font-display text-3xl sm:text-4xl font-semibold leading-none">{card.name}</h3>
                   <span className="text-xl sm:text-2xl font-light">{card.age}</span>
-                  {card.verification_status === "verified" && <VerifiedBadge size={22} className="mb-0.5" />}
+                  <VerifiedBadge size={22} className="mb-0.5" />
                 </div>
                 {card.city && (
                   <div className="flex items-center gap-1 text-sm text-white/80 mt-1">
