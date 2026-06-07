@@ -41,7 +41,7 @@ export function SwipeDeck() {
       supabase.from("demo_profiles").select("*"),
       // `suspended = false` is enforced by RLS ("profiles read" policy), so we
       // don't filter on it here (the suspended column is not granted to authenticated).
-      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests,verification_status").neq("id", user.id).eq("verification_status", "verified"),
+      supabase.from("profiles").select("id,name,age,bio,photo_url,city,interests").neq("id", user.id),
     ]);
     const all: Card[] = [...(real ?? []), ...(demo ?? [])]
       .filter((p) => !swipedIds.has(p.id) && !blockedIds.has(p.id) && p.photo_url)
