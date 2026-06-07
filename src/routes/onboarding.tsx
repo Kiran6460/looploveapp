@@ -105,27 +105,23 @@ function OnboardingPage() {
       toast.error(parsed.error.issues[0].message);
       return;
     }
-    const nameCheck = moderateText(parsed.data.name, "Name");
-    if (!nameCheck.ok) { toast.error(nameCheck.reason); return; }
-    const bioCheck = moderateText(parsed.data.bio, "Bio");
-    if (!bioCheck.ok) { toast.error(bioCheck.reason); return; }
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    try {
+      await saveOnboardingFn({ data: {
         name: parsed.data.name,
         age: parsed.data.age,
         city: parsed.data.city ?? "",
         bio: parsed.data.bio,
         interests: parsed.data.interests,
         photo_url: parsed.data.photo_url,
-        onboarded: true,
-      })
-      .eq("id", user.id);
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Profile ready ✨");
-    void navigate({ to: "/" });
+      }});
+      toast.success("Profile ready ✨");
+      void navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save profile");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading || authLoading) {
