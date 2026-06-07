@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Heart, Loader2, X } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
-import { moderateText } from "@/lib/moderation";
+import { saveOnboarding } from "@/lib/profile.functions";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
