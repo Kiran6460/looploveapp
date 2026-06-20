@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -22,6 +23,11 @@ import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalGuidelinesRouteImport } from './routes/legal.guidelines'
 import { Route as ChatMatchIdRouteImport } from './routes/chat.$matchId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/chat/$matchId': typeof ChatMatchIdRoute
   '/legal/guidelines': typeof LegalGuidelinesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
+    | '/signup'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
+    | '/signup'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/settings'
+    | '/signup'
     | '/chat/$matchId'
     | '/legal/guidelines'
     | '/legal/privacy'
@@ -180,6 +192,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   ChatMatchIdRoute: typeof ChatMatchIdRoute
   LegalGuidelinesRoute: typeof LegalGuidelinesRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -188,6 +201,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -284,6 +304,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   ChatMatchIdRoute: ChatMatchIdRoute,
   LegalGuidelinesRoute: LegalGuidelinesRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
